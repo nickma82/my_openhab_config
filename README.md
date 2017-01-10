@@ -1,0 +1,1 @@
+# my_openhab_config
