@@ -1,0 +1,88 @@
+import org.openhab.core.library.types.*
+import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+
+var Number counter = 0
+
+/** nilan computations 
+ * 
+ * reads out each variable in group "heat_nilan" and
+ * updates the value in the group "heat_nilan_aggregated"
+ * with the same value name concatinated by a "_div"
+ * at the end.
+ * 
+ * e.g. (heat_nilan)t11 is going to be saved in
+ * 		(heat_nilan_aggregated)t11_div
+ */
+rule "nilan t0-15 sensor division 100"
+when 
+	//Time cron "0/1 * * * * ?" or
+	Item heat_nilan changed or
+	System started
+then
+	if (!heat_nilan?.members.empty && heat_nilan_aggregated?.members.empty) {
+		logWarn("nilan", "There are elements in the group heat_nilan, but none in heat_nilan_aggregated")
+	} else {
+		logDebug("nilan", "heat_nilan with " + heat_nilan?.members.size + " members; counter:" + counter)
+		counter = counter +1
+	}
+	
+	// @note concerning to this post: https://community.openhab.org/t/get-the-member-of-a-group-that-triggered-the-rule/16519
+	//       there is no way without persistence to check which element of the group has been updated
+	//       so we iterate over all of them 
+	heat_nilan?.members.forEach[sourceEl| {
+		//divide the value through 100
+		var Number decimalTemperature = (sourceEl.state as DecimalType) 
+		if(decimalTemperature > 0x8000) {decimalTemperature = decimalTemperature - 0xFFFF}
+		val newTemp = decimalTemperature / 100
+
+		// check if there exists the sourceEl from heat_nilan in 
+		val String targetFilterName = sourceEl.name.toString + "_div"
+		//// debug output
+		//val Number targetCount = heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).size
+		//logDebug("nilan", "checking element:" + targetFilterName + ", found:" + targetCount)
+		
+		heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).forEach[targetEl |
+			//check if source has changed, to prevent unnecessary postUpdates
+			var boolean sourceAndTargetEqual = false
+			if (targetEl.state.toString != "Uninitialized") {
+				val Integer oldTargetState = (targetEl.state as DecimalType * 100).intValue
+				val Integer newTargetState = (newTemp *100).intValue
+				//logDebug("nilan", "targetEl " + targetEl.name + ": currentState:" + oldTargetState + ", newState:" + newTargetState)
+				sourceAndTargetEqual = oldTargetState.equals(newTargetState)
+			}
+			
+			if(!sourceAndTargetEqual){
+				logDebug("nilan", "postUpdating targetEl:" + targetEl.name 
+					+ ", old value:" + targetEl.state.toString
+					+ ", with new value:" + newTemp + " (originally:" + sourceEl.state.toString	+ ")" )
+				
+				postUpdate(targetEl, newTemp)
+			}
+		]
+	}]
+end
+
+
+rule "nilan_user_tempset_div restore*100"
+	when
+		Item nilan_user_tempset_div received command
+	then
+		var Number realTemperature = (nilan_user_tempset_div.state as DecimalType)
+		sendCommand(nilan_user_tempset, realTemperature*100);
+end
+
+rule "nilan_hotwater_t11_div restore*100"
+	when
+		Item nilan_hotwater_t11_div received command
+	then
+		var Number realTemperature = (nilan_hotwater_t11_div.state as DecimalType)
+		sendCommand(nilan_hotwater_t11, realTemperature*100);
+end
+rule "nilan_hotwater_t12_div restore*100"
+	when
+		Item nilan_hotwater_t12_div received command
+	then
+		var Number realTemperature = (nilan_hotwater_t12_div.state as DecimalType)
+		sendCommand(nilan_hotwater_t12, realTemperature*100);
+end

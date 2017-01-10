@@ -1,0 +1,40 @@
+sitemap demo label="Main Menu"
+{
+        Frame label="Nilan Overview" {
+                Text item=nilan icon="firstfloor" label="Nilan heatpump" {
+                        Frame label="Control panel" {
+                                Switch item=nilan_onoff
+                                Switch item=nilan_vent mappings=[1="1", 2="2", 3="3", 4="Turbo"]
+                                
+                                Switch item=nilan_user_operation_mode icon="climate" mappings=[1=Heat, 2=Cool, 3=Auto, 4=Service]
+                                Text item=nilan_control_state
+                                
+                                Text item=nilan_t15_div
+                                Text item=nilan_t7_div valuecolor=[<=20="blue",>28="red"]
+                                Text item=nilan_t10_div
+                                /*
+                                Setpoint item=nilan_user_tempset_div minValue=0 maxValue=65 step=1
+                                */
+                        }
+
+                        Frame label="Water" {
+                                Text item=nilan_t11_div valuecolor=[>45="green",<=40="blue",<20="red"]
+                                Selection item=nilan_t11_tempset mappings=[2500="25", 4000="40", 6300="Legionella"]
+                                Text item=nilan_t12_div valuecolor=[>45="green",<=45="blue",<20="red"]
+                                Selection item=nilan_t12_tempset mappings=[3000="30", 3500="35", 4000="40", 4900="40", 6000="48"]
+                        }
+                        
+                        Frame {
+                                //in & outlets
+                                Text item=nilan_t1_div
+                                Text item=nilan_t4_div
+                                
+                                Text item=nilan_t5_div
+                                Text item=nilan_t6_div
+                                
+                                Text item=nilan_t0_div
+                                //Text item=Weather_Humidity
+                        }
+                }
+        }
+}

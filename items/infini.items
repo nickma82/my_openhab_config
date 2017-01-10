@@ -1,0 +1,17 @@
+/* infini */
+Group Ups (All)
+String Ups_Status 				"UPS status [%s]" <inverter> 	(Ups) {networkupstools="ups1:ups.status"}
+Number Ups_Output_Power			"Ups output power [%.1f W]" 	(Ups) {networkupstools="ups1:output.power"}
+Number Ups_Output_power_percent	"Ups output power percent (from max) [%.1f %%]" (Ups) {networkupstools="ups1:output.load.percent"}
+String Ups_line_direction		"UPS line direction [%s]" 		(Ups) {networkupstools="ups1:line.direction"}
+
+/*Number Ups_battery_charge		"Battery fill level [%d %%]" (Ups) {networkupstools="ups1:battery.charge"}
+Number Ups_battery_charge_i 	"Battery charging current [%.1f A]" (Ups) {networkupstools="ups1:battery.charging.current"} // 0.6
+Number Ups_battery_voltage 		"Battery Voltage [%.1f V]" (Ups) {networkupstools="ups1:battery.voltage"} // 54.0
+String Ups_battery_status 		"Battery status [%s]" (Ups) {networkupstools="ups1:battery.status"} //01
+
+Number Ups_generator
+Number Ups_generator_L1_power 	"Generator input Power [%.1f W]" (Ups)	{networkupstools="ups1:pv1.input.power"} 
+Number Ups_generator_L2_power 	"Generator2 load Power [%.1f W]" (Ups)	{networkupstools="ups1:pv2.input.power"}
+
+*/
