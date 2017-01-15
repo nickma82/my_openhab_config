@@ -17,8 +17,9 @@ var Number counter = 0
 rule "nilan t0-15 sensor division 100"
 when 
 	//Time cron "0/1 * * * * ?" or
-	Item heat_nilan changed or
-	System started
+	Item heat_nilan changed 
+	//or
+	//System started
 then
 	if (!heat_nilan?.members.empty && heat_nilan_aggregated?.members.empty) {
 		logWarn("nilan", "There are elements in the group heat_nilan, but none in heat_nilan_aggregated")
@@ -72,6 +73,7 @@ rule "nilan_user_tempset_div restore*100"
 		sendCommand(nilan_user_tempset, realTemperature*100);
 end
 
+/*
 rule "nilan_hotwater_t11_div restore*100"
 	when
 		Item nilan_hotwater_t11_div received command
@@ -85,4 +87,4 @@ rule "nilan_hotwater_t12_div restore*100"
 	then
 		var Number realTemperature = (nilan_hotwater_t12_div.state as DecimalType)
 		sendCommand(nilan_hotwater_t12, realTemperature*100);
-end
+end*/

@@ -1,0 +1,17 @@
+// shows the sunrise
+DateTime Sunrise_Time  "Sunrise [%1$tH:%1$tM]"  {astro="planet=sun, type=rise, property=start"}
+
+// schedules a event which starts at sunrise, updating the Switch with ON, followed by a OFF
+//Switch Sunrise_Event   {astro="planet=sun, type=rise, property=start"}
+
+// schedules a event which starts 10 minutes AFTER sunrise
+Switch Sunrise_Event_Post   {astro="planet=sun, type=rise, property=start, offset=10"}
+
+// schedules a event which starts 10 minutes BEFORE sunrise
+//Switch Sunrise_Event   {astro="planet=sun, type=rise, property=start, offset=-10"}
+
+// shows the sunset
+DateTime Sunset_Time   "Sunset [%1$tH:%1$tM]"   {astro="planet=sun, type=set, property=end"}
+
+// schedules a event which starts 30 minutes BEFORE sunset:
+Switch Sunset_Event_Pre    {astro="planet=sun, type=set, property=end, offset=-30"}

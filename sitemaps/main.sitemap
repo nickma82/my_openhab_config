@@ -1,40 +1,70 @@
-sitemap demo label="Main Menu"
+sitemap main label="Main Menu"
 {
-        Frame label="Nilan Overview" {
-                Text item=nilan icon="firstfloor" label="Nilan heatpump" {
-                        Frame label="Control panel" {
-                                Switch item=nilan_onoff
-                                Switch item=nilan_vent mappings=[1="1", 2="2", 3="3", 4="Turbo"]
-                                
-                                Switch item=nilan_user_operation_mode icon="climate" mappings=[1=Heat, 2=Cool, 3=Auto, 4=Service]
-                                Text item=nilan_control_state
-                                
-                                Text item=nilan_t15_div
-                                Text item=nilan_t7_div valuecolor=[<=20="blue",>28="red"]
-                                Text item=nilan_t10_div
-                                /*
-                                Setpoint item=nilan_user_tempset_div minValue=0 maxValue=65 step=1
-                                */
-                        }
+    Frame label="Overview" {
+	    Text icon="heating" label="Nilan heatpump" {
+	        Frame label="Control panel" {
+	            Switch item=nilan_onoff
+	            Setpoint item=nilan_user_tempset_div minValue=0 maxValue=65 step=1
+	        	Text item=nilan_t15_div {
+		            Text item=nilan_t7_div valuecolor=[<=16="blue",>28="red"]
+	                Text item=nilan_t10_div
+	                
+	                //in & outlets
+		            Text item=nilan_t1_div
+		            Text item=nilan_t4_div
+	        	}
+	            Switch item=nilan_vent mappings=[1="1", 2="2", 3="3", 4="Turbo"]
+	            
+	            Switch item=nilan_user_operation_mode icon="climate" mappings=[1=Heat, 2=Cool, 3=Auto, 4=Service]
+	            Text item=nilan_control_state
+	        }
+	
+	        Frame label="Water" {
+	            Text item=nilan_t11_div valuecolor=[>45="green",<=40="blue",<20="red"]
+	            Selection item=nilan_t11_tempset mappings=[1000="10 °C", 2500="25 °C", 4000="40 °C", 6300="Legionella (63 °C)"]
+	            Text item=nilan_el_heater_enabled icon="smartheater-on"
+	            Text item=nilan_t12_div valuecolor=[>45="green",<=45="blue",<20="red"]
+	            Selection item=nilan_t12_tempset mappings=[1000="10 °C", 3000="30 °C", 3500="35 °C", 4000="40 °C", 4800="48 °C"]
+	            Text item=nilan_heatpump_enabled
+	        }
+	        
+	        Frame label="Misc Data"{              
+	            Text item=nilan_t5_div
+	            Text item=nilan_t6_div
+	            
+	            Text item=nilan_t0_div
+	        	Text item=nilan_fan_supply_div
+	        	Text item=nilan_fan_exhaust_div
+	            //Text item=Weather_Humidity
+	    	}
+	    }
+	    
+		Text icon="solarplant" label="Infini Photovoltaik" {
+			Frame {
+				Text item=Ups_line_direction valuecolor=["Feeding grid"="green"]
+				Text item=Ups_generator_L1_power //icon="selfEnergy"
+				Text item=Ups_generator_L2_power
+				Text item=Ups_Output_Power
+				Text item=Ups_Output_power_percent
+			}
+			Frame label="Misc" {
+				Text item=Ups_energy_prduction_day
+				Text item=Ups_Status
+				Text item=Ups_battery_charge
+			 	Text item=Ups_battery_charge_i
+				Text item=Ups_battery_voltage
+			/*	Text item=Ups_battery_status
+			*/
+			}
+		}
+	}
+	
+	Frame label="General Information" {
+		Text item=Sunrise_Time 
+		Text item=Sunset_Time  
+		Switch item=Sunrise_Event_Post
+		Switch item=Sunset_Event_Pre
+	}
+} //end sitemap main
 
-                        Frame label="Water" {
-                                Text item=nilan_t11_div valuecolor=[>45="green",<=40="blue",<20="red"]
-                                Selection item=nilan_t11_tempset mappings=[2500="25", 4000="40", 6300="Legionella"]
-                                Text item=nilan_t12_div valuecolor=[>45="green",<=45="blue",<20="red"]
-                                Selection item=nilan_t12_tempset mappings=[3000="30", 3500="35", 4000="40", 4900="40", 6000="48"]
-                        }
-                        
-                        Frame {
-                                //in & outlets
-                                Text item=nilan_t1_div
-                                Text item=nilan_t4_div
-                                
-                                Text item=nilan_t5_div
-                                Text item=nilan_t6_div
-                                
-                                Text item=nilan_t0_div
-                                //Text item=Weather_Humidity
-                        }
-                }
-        }
-}
+
