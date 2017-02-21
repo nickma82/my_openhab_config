@@ -1,0 +1,72 @@
+import org.openhab.core.library.types.*
+import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+
+rule "Nilan Init virtual Items of nilan night time reduction"
+when
+    System started
+then
+	if (nilanuser_en_t12_autoreduction.state == Uninitialized) {
+        nilanuser_en_t12_autoreduction.postUpdate(OFF)
+    }
+    if (nilanuser_t12_currently_reduced.state == Uninitialized) { 
+        nilanuser_t12_currently_reduced.postUpdate(OFF)
+    }
+    if (nilanuser_t12_reduced.state == Uninitialized) {
+        nilanuser_t12_reduced.postUpdate(25.0)
+    }
+    if (nilanuser_t12_nonreduced_backup.state == Uninitialized) {
+        nilanuser_t12_nonreduced_backup.postUpdate(0)
+    }
+end
+
+rule "check nighttime reset conditions on nilan_t12_tempset changes"
+when
+	Item nilan_t12_tempset_div changed
+then
+	val Boolean nightTimeReductionON = (nilanuser_t12_currently_reduced.state == ON)
+	val Boolean newValueEqualTargetReduced = (nilan_t12_tempset_div.state as DecimalType == nilanuser_t12_reduced.state as DecimalType)
+	
+	val Boolean changeDuringNighttime = (nightTimeReductionON && !newValueEqualTargetReduced) 
+	if(changeDuringNighttime) {
+		logInfo("nilan", "user chagned the tempset to:" + nilan_t12_tempset_div.state + ", resetting currently reduced state to OFF")
+		postUpdate(nilanuser_t12_currently_reduced, OFF)
+	}
+end
+
+rule "Nilan set reduced boiler temp at sunset"
+when
+	Item Sunset_Event_2hPre changed to ON
+then
+	val Boolean autoreductionEnabled = (nilanuser_en_t12_autoreduction.state == ON)
+	if(autoreductionEnabled) {
+		// backup the current value
+		postUpdate(nilanuser_t12_nonreduced_backup, nilan_t12_tempset_div.state)
+		
+		// set the reduced temp
+		postUpdate(nilanuser_t12_currently_reduced, ON)
+		
+		Thread::sleep(20)
+		val targetTemp = nilanuser_t12_reduced.state as DecimalType * 100
+		logInfo("nilan", "nighttime reduction recovering to temp:" + targetTemp)
+		sendCommand(nilan_t12_tempset, targetTemp)
+	} else {
+		logDebug("nilan", "recieved a sunset event, but auto-reduction is disabled by the user")
+	}
+end
+
+rule "Nilan restore non-reduced boiler temp"
+when
+	Item Sunrise_Event_2hPost changed to ON or
+	Item nilanuser_en_t12_autoreduction changed to OFF
+then
+	// just restore temp if the current_reduction is actually enabled
+	if(nilanuser_t12_currently_reduced.state == ON) {
+		postUpdate(nilanuser_t12_currently_reduced, OFF)
+		
+		Thread::sleep(20)
+		val targetTemp = nilanuser_t12_nonreduced_backup.state as DecimalType *100
+		logInfo("nilan", "nighttime reduction setting temp to:" + targetTemp)
+		sendCommand(nilan_t12_tempset, targetTemp)
+	}
+end

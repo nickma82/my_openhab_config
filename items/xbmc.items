@@ -1,0 +1,5 @@
+Switch XBMC_power		 "XBMC reachable"      {xbmc="<[#livingRoom|System.State]"}
+String XBMC_prop_percent "Property.percentage [%s %%]" {xbmc="<[#livingRoom|Property.percentage]"}
+String XBMC_prop_totaltime "Property.totaltime [%s]" {xbmc="<[#livingRoom|Property.totaltime]"}
+String XBMC_player_state "Property.state [%s]" {xbmc="<[#livingRoom|Player.State]"}
+String XBMC_player_title "Property.title [%s]" {xbmc="<[#livingRoom|Player.Title]"}

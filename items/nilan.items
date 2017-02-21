@@ -1,13 +1,13 @@
 /* Nilan */
 
 Group nilan_data (All)
+
 Switch nilan_onoff					"Device main power"									 (nilan_data) {modbus="nilan_modes:0"}
 Number nilan_user_operation_mode 	"Operation mode" 									 (nilan_data) {modbus="nilan_modes:1"}
 Number nilan_vent					"Ventilation step select"  							 (nilan_data) {modbus="nilan_modes:2"}
 Number nilan_el_heater_enabled		"Electrical Hot water Heater [MAP(nilan_on_off.map):%s]" 						 (nilan_data) {modbus="nilan_el_heater:0"}
-Number nilan_heatpump_enabled		"Heatpump active [MAP(nilan_on_off.map):%s]" 						 (nilan_data) {modbus="nilan_comp:0"}
-Number nilan_t11_tempset			"Target electric heater (t11) [(%d/100 °C)]" 		 <temperature> (nilan_data) {modbus="nilan_boiler_setpoint:0"}
-Number nilan_t12_tempset			"Target Heatpump (t12) [(%d/100 °C)]" 				 <temperature> (nilan_data) {modbus="nilan_boiler_setpoint:1"}
+Number nilan_heatpump_enabled		"Heatpump active [MAP(nilan_on_off.map):%s]" 				<socket>	   (nilan_data) {modbus="nilan_comp:0"}
+
 
 // Fan's states (nilan_fans), hot water heater (nilan_el_heater), compressor onoff (nilan_comp)
 // operation.state (nilan_state)
@@ -33,30 +33,48 @@ Number nilan_t9		"temporary variable will be processed in .rules file" 		<temper
 Number nilan_t10	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:10"}
 Number nilan_t11	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:11"}
 Number nilan_t12	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:12"}
+Number nilan_t11_tempset	"Target electric heater (t11) [(%d °C)]" 		 <temperature> (heat_nilan) {modbus="nilan_boiler_setpoint:0"}
+Number nilan_t12_tempset	"Target Heatpump (t12) [(%d °C)]" 				 <temperature> (heat_nilan) {modbus="nilan_boiler_setpoint:1"}
 Number nilan_t13	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:13"}
 Number nilan_t14	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:14"}
 Number nilan_t15	"temporary variable will be processed in .rules file" 		<temperature> (heat_nilan)		{modbus="nilan_t:15"}
 
 
 Group heat_nilan_aggregated (All)
+Group heat_nilan_airtemps_plotable (All)
+Group heat_nilan_boilertemps_plotable (All)
 // nilan tdivided values
-Number nilan_fan_supply_div		"Supply Fan speed [%2.1f %%]"  						(heat_nilan_aggregated)
-Number nilan_fan_exhaust_div	"Exhaust Fan speed [%2.1f %%]"  					(heat_nilan_aggregated)
-Number nilan_user_tempset_div	"Target air temp [%d °C]" 		<temperature> 	(heat_nilan_aggregated)
-Number nilan_t0_div		"Controller board (t0) [%2.2f °C]" 	  	<temperature> 	(heat_nilan_aggregated)
-Number nilan_t1_div		"Fresh air intake (t1) [%2.2f °C]" 		<temperature> 	(heat_nilan_aggregated)
-Number nilan_t2_div		"Supply Air Inlet (before heater) (t2) [%2.2f °C]" <temperature> (heat_nilan_aggregated)
-Number nilan_t3_div		"Room exhaust (t3) [%2.2f °C]" 			<temperature>	(heat_nilan_aggregated)
-Number nilan_t4_div		"Outlet (t4) [%2.2f °C]" 				<temperature>	(heat_nilan_aggregated)
-Number nilan_t5_div		"Condenser (t5) [%2.2f °C]" 			<temperature> 	(heat_nilan_aggregated)
-Number nilan_t6_div		"Evaporator (t6) [%2.2f °C]" 			<temperature> 	(heat_nilan_aggregated)
-Number nilan_t7_div		"Inlet into room (after heater) (t7) [%2.2f °C]" <temperature> (heat_nilan_aggregated)
-Number nilan_t8_div		"Outdoor (t8) [%2.2f °C]" 				<temperature> 	(heat_nilan_aggregated)
-Number nilan_t9_div		"Heating surface (t9) [%2.2f °C]" 		<temperature> 	(heat_nilan_aggregated)
-Number nilan_t10_div	"External (room to extern) (t10) [%2.2f °C]" <temperature> (heat_nilan_aggregated)
-Number nilan_t11_div	"Boiler Top (t11) [%2.2f °C]" 			<temperature> 	(heat_nilan_aggregated)
-Number nilan_t12_div	"Boiler Bottom (t12) [%2.2f °C]"		<temperature> 	(heat_nilan_aggregated)
-//Number nilan_t13_div	"EK return (t13) [%2.2f °C]" <temperature> (heat_nilan_aggregated)
-//Number nilan_t14_div	"EK supply (t14) [%2.2f °C]" <temperature> (heat_nilan_aggregated)
-Number nilan_t15_div	"Room Temperature (panel)(t15) [%2.2f °C]" <temperature>(heat_nilan_aggregated)
+Number nilan_fan_supply_div		"Supply Fan speed [%2.1f %%]"  								(heat_nilan_aggregated)
+Number nilan_fan_exhaust_div	"Exhaust Fan speed [%2.1f %%]"  							(heat_nilan_aggregated)
+Number nilan_user_tempset_div	"Target air temp [%d °C]" 		<temperature> 				(heat_nilan_aggregated)
+Number nilan_t0_div		"Controller board (t0) [%2.2f °C]" 	  	<temperature> 				(heat_nilan_aggregated)
+Number nilan_t1_div		"Fresh air intake (t1) [%2.2f °C]" 		<temperature> 				(heat_nilan_aggregated, heat_nilan_airtemps_plotable)
+Number nilan_t2_div		"Supply Air Inlet (before heater) (t2) [%2.2f °C]" <temperature> 	(heat_nilan_aggregated)
+Number nilan_t3_div		"Room exhaust (t3) [%2.2f °C]" 			<temperature>				(heat_nilan_aggregated)
+Number nilan_t4_div		"Outlet (t4) [%2.2f °C]" 				<temperature>				(heat_nilan_aggregated)
+Number nilan_t5_div		"Condenser (t5) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated)
+Number nilan_t6_div		"Evaporator (t6) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated)
+Number nilan_t7_div		"Inlet into room (after heater) (t7) [%2.2f °C]" <temperature> 		(heat_nilan_aggregated, heat_nilan_airtemps_plotable)
+Number nilan_t8_div		"Outdoor (t8) [%2.2f °C]" 				<temperature> 				(heat_nilan_aggregated)
+Number nilan_t9_div		"Heating surface (t9) [%2.2f °C]" 		<temperature> 				(heat_nilan_aggregated)
+Number nilan_t10_div	"External (room to extern) (t10) [%2.2f °C]" <temperature> 			(heat_nilan_aggregated, heat_nilan_airtemps_plotable)
+Number nilan_t11_div	"Boiler Top (t11) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated, heat_nilan_boilertemps_plotable)
+Number nilan_t12_div	"Boiler Bottom (t12) [%2.2f °C]"		<temperature> 				(heat_nilan_aggregated, heat_nilan_boilertemps_plotable)
+Number nilan_t11_tempset_div			"Target electric heater (t11) [(current: %2.2f °C)]" <temperature> (heat_nilan_aggregated)
+Number nilan_t12_tempset_div			"Target Heatpump (t12) [(current: %2.2f °C)]" 		<temperature> (heat_nilan_aggregated)
+//Number nilan_t13_div	"EK return (t13) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated)
+//Number nilan_t14_div	"EK supply (t14) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated)
+Number nilan_t15_div	"Room Temperature (panel)(t15) [%2.2f °C]" <temperature>			(heat_nilan_aggregated, heat_nilan_airtemps_plotable)
+
+
+///////////////////////// User config things
+// Charts
+Group nilan_user_config (All)
+Number 		nilan_chart_period				"Chart Period" (nilan_user_config)
+
+Switch nilanuser_en_t12_autoreduction  		"Enable auto night time t12 reduction [%s]" 		(nilan_user_config)
+Switch nilanuser_t12_currently_reduced		"Is the temperature currently reduced [%s]"			(nilan_user_config)
+Number nilanuser_t12_reduced 				"Reduced Boiler Bottom (t12) [%2.2f °C]" 	<temperature>  (nilan_user_config)
+Number nilanuser_t12_nonreduced_backup 		"Non reduced temp backuped [%2.2f °C]" 		<temperature>  (nilan_user_config)
+
 

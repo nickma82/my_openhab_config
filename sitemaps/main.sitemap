@@ -1,17 +1,23 @@
 sitemap main label="Main Menu"
 {
-    Frame label="Overview" {
+    Frame label="Command and Control" {
 	    Text icon="heating" label="Nilan heatpump" {
 	        Frame label="Control panel" {
 	            Switch item=nilan_onoff
 	            Setpoint item=nilan_user_tempset_div minValue=0 maxValue=65 step=1
 	        	Text item=nilan_t15_div {
 		            Text item=nilan_t7_div valuecolor=[<=16="blue",>28="red"]
+	        		Text item=nilan_t15_div
 	                Text item=nilan_t10_div
 	                
 	                //in & outlets
 		            Text item=nilan_t1_div
 		            Text item=nilan_t4_div
+		            //graphs
+		            Switch item=nilan_chart_period label="Chart Period" mappings=[0="Hour", 1="Day", 2="Week"]
+					Chart item=heat_nilan_airtemps_plotable period=h refresh=6000 visibility=[nilan_chart_period==0, nilan_chart_period=="Uninitialized"]
+					Chart item=heat_nilan_airtemps_plotable period=D refresh=30000 visibility=[nilan_chart_period==1]
+					Chart item=heat_nilan_airtemps_plotable period=W refresh=30000 visibility=[nilan_chart_period==2]
 	        	}
 	            Switch item=nilan_vent mappings=[1="1", 2="2", 3="3", 4="Turbo"]
 	            
@@ -21,23 +27,44 @@ sitemap main label="Main Menu"
 	
 	        Frame label="Water" {
 	            Text item=nilan_t11_div valuecolor=[>45="green",<=40="blue",<20="red"]
-	            Selection item=nilan_t11_tempset mappings=[1000="10 °C", 2500="25 °C", 4000="40 °C", 6300="Legionella (63 °C)"]
-	            Text item=nilan_el_heater_enabled icon="smartheater-on"
 	            Text item=nilan_t12_div valuecolor=[>45="green",<=45="blue",<20="red"]
-	            Selection item=nilan_t12_tempset mappings=[1000="10 °C", 3000="30 °C", 3500="35 °C", 4000="40 °C", 4800="48 °C"]
+	            Text icon="temperature" label="Boiler Temp Charts"  {
+					Chart item=heat_nilan_boilertemps_plotable period=D refresh=30000
+	            }
+	            
+	            Selection item=nilan_t11_tempset_div mappings=[10.00000000="10 °C", 25.00000000="25 °C", 40.00000000="40 °C", 63.00000000="Legionella (63 °C)"]
+	            Text item=nilan_el_heater_enabled icon="smartheater-on"
+	            Selection item=nilan_t12_tempset_div mappings=[10.00000000="10 °C", 20.00000000="20 °C", 30.00000000="30 °C", 35.00000000="35 °C", 40.00000000="40 °C", 48.00000000="48 °C", 53.00000000="53 °C"]
 	            Text item=nilan_heatpump_enabled
+	            // Night time reduction
+	            Text item=nilanuser_en_t12_autoreduction icon="clock" visibility=[nilanuser_en_t12_autoreduction!="Uninitialized"] {
+	            	Frame {
+		            	Switch item=nilanuser_en_t12_autoreduction
+		            	Setpoint item=nilanuser_t12_reduced visibility=[nilanuser_t12_currently_reduced==OFF]
+		            	Text     item=nilanuser_t12_reduced visibility=[nilanuser_t12_currently_reduced==ON]
+		            	Text item=nilanuser_t12_nonreduced_backup
+		            	Text item=nilanuser_t12_currently_reduced
+	            	}
+	            	Frame label="Sun Information" {
+						Text item=Sunrise_Time icon="clock"
+						Text item=Sunset_Time icon="clock"
+					}
+	            }
 	        }
 	        
-	        Frame label="Misc Data"{              
-	            Text item=nilan_t5_div
-	            Text item=nilan_t6_div
-	            
-	            Text item=nilan_t0_div
-	        	Text item=nilan_fan_supply_div
-	        	Text item=nilan_fan_exhaust_div
-	            //Text item=Weather_Humidity
+	        Frame label="Misc Data"{
+	        	Text icon="temperature" label="Misc Temperature data" {
+		            Text item=nilan_t5_div
+		            Text item=nilan_t6_div
+		            
+		            Text item=nilan_t0_div
+		        	Text item=nilan_fan_supply_div
+		        	Text item=nilan_fan_exhaust_div
+		            //Text item=Weather_Humidity
+	            }
 	    	}
 	    }
+	    // End of Nilan heatpump
 	    
 		Text icon="solarplant" label="Infini Photovoltaik" {
 			Frame {
@@ -60,10 +87,27 @@ sitemap main label="Main Menu"
 	}
 	
 	Frame label="General Information" {
-		Text item=Sunrise_Time 
-		Text item=Sunset_Time  
-		Switch item=Sunrise_Event_Post
-		Switch item=Sunset_Event_Pre
+		Text icon="sun" label="Sun information" {
+			Frame label="Daily Sun Information" {
+				Text item=Sunrise_Time icon="clock"
+				Text item=Sunset_Time icon="clock"
+				Switch item=Sunrise_Event_2hPost
+				Switch item=Sunset_Event_2hPre
+				Text item=Season_Name
+			}
+		}
+		
+		Text icon="television" label="Kodi/xbmc" {
+			Frame{
+				Switch item=XBMC_power
+			}
+			Frame visibility=[XBMC_power==ON] {
+				Text item=XBMC_prop_percent
+				Text item=XBMC_prop_totaltime
+				Text item=XBMC_player_state
+				Text item=XBMC_player_title
+			}
+		}
 	}
 } //end sitemap main
 

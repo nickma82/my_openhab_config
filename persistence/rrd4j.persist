@@ -1,0 +1,24 @@
+// persistence strategies have a name and a definition and are referred to in the "Items" section
+
+Strategies {
+        everyMinute :   "0 * * * * ?"
+        everyHour :     "0 0 * * * ?"
+        everyDay  :     "0 0 0 * * ?"
+
+        // if no strategy is specified for an item entry below, the default list will be used
+        default = everyChange
+}
+
+// Each line in this section defines for which item(s) which strategy(ies) should be applied.
+// You can list single items, use "*" for all items or "groupitem*" for all members of a group
+// item (excl. the group item itself).
+
+Items {
+        gRRD4J_1 : strategy = everyChange, restoreOnStartup
+        
+        //Nilan temperatures
+        nilan_t1_div, nilan_t7_div, nilan_t11_div, nilan_t12_div, nilan_t15_div: strategy = everyMinute
+        
+        //Nilan nighttime reduction
+        nilanuser_en_t12_autoreduction, nilanuser_t12_currently_reduced, nilanuser_t12_reduced, nilanuser_t12_nonreduced_backup : strategy = everyChange, restoreOnStartup
+}

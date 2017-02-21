@@ -1,0 +1,12 @@
+import org.openhab.core.library.types.*
+//import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+
+rule "Init virtual Items"
+when
+    System started
+then
+    if (gRRD4J_1.state == Uninitialized) {
+        gRRD4J_1.postUpdate(42)
+    }
+end
