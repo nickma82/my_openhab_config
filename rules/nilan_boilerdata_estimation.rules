@@ -1,0 +1,56 @@
+import org.openhab.core.library.types.*
+import org.openhab.core.persistence.*
+import org.openhab.model.script.actions.*
+import org.joda.time.*
+import java.lang.Math
+
+rule "Nilan boiler estimation values init"
+when
+    System started
+then
+	if (nilan_t12_trend_k.state == Uninitialized) {
+        nilan_t12_trend_k.postUpdate("Not calculated yet")
+    }
+end
+
+
+rule "Nilan calculate boiler estimation data"
+when
+	Time cron "0 * * * * ?"
+	or Item nilan_t12_div changed
+then
+	//now.minusMinutes(2).minusSeconds(30)
+	val Number secsForAveraging = 7 * 60
+	var Number k_fiveMinutes = nilan_t12_div.deltaSince(now.minusSeconds(secsForAveraging)) as DecimalType
+	logDebug("nilan", "k_fiveMinutes:" + k_fiveMinutes)
+	
+	val Number k_sec = k_fiveMinutes / secsForAveraging
+	val Number k_hour = k_sec * 360
+	
+	val Number k_hours_fourDigits = Math::round((k_hour * 10000.0).doubleValue) / 10000.0
+	logDebug("nilan", "boiler k_hours: " + k_hours_fourDigits + "[°K/h]")
+	postUpdate(nilan_t12_trend_k, k_hours_fourDigits)
+	
+	// y = kx + d
+	// x = (y-d)/k
+	// y..target temperature [°C], x..time [sec]
+	// d..temp now (e.g.nilan_t12_div)[°C]
+	// gives x==estimated time until target is reached
+	val Boolean targetTempReached = (nilan_t12_div.state as DecimalType >= nilan_t12_tempset_div.state as DecimalType)
+	if (targetTempReached) {
+		postUpdate(nilan_t12_estimated_finished, "target temp reached")
+	} else if(k_sec > 0.00000) {
+		val Number y = nilan_t12_tempset_div.state as DecimalType
+		val Number d = nilan_t12_div.state as DecimalType
+		val Number k = k_sec
+		
+		val Number x = (y-d)/k
+		val Number x_min_twoDigits = Math::round((x / 60 * 100.0).doubleValue) / 100.0
+		logDebug("nilan", "estimated time to reach nilan_t12_tempset_div: " + x_min_twoDigits + " [min]")
+		postUpdate(nilan_t12_estimated_finished, x_min_twoDigits.toString + " [min]")  
+	} else {
+		logDebug("nilan", "boiler cooling down")
+		postUpdate(nilan_t12_estimated_finished, "N.a.")  
+	}
+	
+end

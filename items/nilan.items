@@ -69,6 +69,7 @@ Number nilan_t15_div	"Room Temperature (panel)(t15) [%2.2f °C]" <temperature>		
 
 ///////////////////////// User config things
 // Charts
+// @requires astro >= 1.8.3, rrd4j >= 1.8.3
 Group nilan_user_config (All)
 Number 		nilan_chart_period				"Chart Period" (nilan_user_config)
 
@@ -76,5 +77,10 @@ Switch nilanuser_en_t12_autoreduction  		"Enable auto night time t12 reduction [
 Switch nilanuser_t12_currently_reduced		"Is the temperature currently reduced [%s]"			(nilan_user_config)
 Number nilanuser_t12_reduced 				"Reduced Boiler Bottom (t12) [%2.2f °C]" 	<temperature>  (nilan_user_config)
 Number nilanuser_t12_nonreduced_backup 		"Non reduced temp backuped [%2.2f °C]" 		<temperature>  (nilan_user_config)
+
+//////////////////////// Boiler estimation values
+// @requires rrd4j >= 1.8.3
+String nilan_t12_trend_k					"T12 temperature trend [%s °K/h]"
+String nilan_t12_estimated_finished			"T12 estimated time until heated up [%s]"
 
 

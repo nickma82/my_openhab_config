@@ -4,9 +4,18 @@ import org.openhab.model.script.actions.*
 
 // Concurrency guard see: https://github.com/openhab/openhab1-addons/wiki/Rules#concurrency-guard
 import java.util.concurrent.locks.ReentrantLock
-var java.util.concurrent.locks.ReentrantLock suppressUpdatesLock  = new java.util.concurrent.locks.ReentrantLock()
-var Boolean suppressUpdates = false
+var java.util.concurrent.locks.ReentrantLock syncLock  = new java.util.concurrent.locks.ReentrantLock()
+var Boolean systemUpAndRunning = false
 
+rule "set systemUpAndRunning shortly after boot"
+when
+	System started
+then
+	Thread::sleep(15000)
+
+	logInfo("nilan", "releasing systemUpAndRunning")
+	systemUpAndRunning = true
+end
 
 /** nilan computations 
  * 
@@ -26,62 +35,59 @@ then
 	//Try to claim the update
 	// note this is necessary because multiple items of the group 
 	//      heat_nilan are changing at the same time, leading to data races
-	var Boolean execute = false
-	suppressUpdatesLock.lock()
-	if(suppressUpdates == false) {
-		suppressUpdates = true
-		execute = true
+	var Boolean lockAquired = false
+	if (systemUpAndRunning) {
+		lockAquired = syncLock.tryLock()
 	}
-	suppressUpdatesLock.unlock()
 	
-	
-	if(execute) {
-		Thread::sleep(100)
-		
+	if(lockAquired) {
 		if (!heat_nilan?.members.empty && heat_nilan_aggregated?.members.empty) {
 			logWarn("nilan", "There are elements in the group heat_nilan, but none in heat_nilan_aggregated")
 		}
 		
-		// @note concerning to this post: https://community.openhab.org/t/get-the-member-of-a-group-that-triggered-the-rule/16519
-		//       there is no way without persistence to check which element of the group has been updated
-		//       so we iterate over all of them 
-		heat_nilan?.members.forEach[sourceEl| {
-			var Number decimalTemperature = (sourceEl.state as DecimalType) 
-			// shape negative values
-			if(decimalTemperature > 0x8000) {decimalTemperature = decimalTemperature - 0xFFFF}
-			// divide the value through 100
-			val newTemp = decimalTemperature / 100
-	
-			// define the target element name
-			val String targetFilterName = sourceEl.name.toString + "_div"
-			//// debug output
-			//val Number targetCount = heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).size
-			//logDebug("nilan", "checking element:" + targetFilterName + ", found:" + targetCount)
+		try {
+			// wait a bit and let the other threads started at (almost) the same time finish
+			Thread::sleep(100)
 			
-			heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).forEach[targetEl |
-				//check if source has changed, to prevent unnecessary postUpdates
-				var boolean sourceAndTargetEqual = false
-				if (targetEl.state.toString != "Uninitialized") {
-					val Integer oldTargetState = (targetEl.state as DecimalType * 100).intValue
-					val Integer newTargetState = (newTemp *100).intValue
-					//logDebug("nilan", "targetEl " + targetEl.name + ": currentState:" + oldTargetState + ", newState:" + newTargetState)
-					sourceAndTargetEqual = oldTargetState.equals(newTargetState)
-				}
+			// @note concerning to this post: https://community.openhab.org/t/get-the-member-of-a-group-that-triggered-the-rule/16519
+			//       there is no way without persistence to check which element of the group has been updated
+			//       so we iterate over all of them 
+			heat_nilan?.members.forEach[sourceEl| {
+				var Number decimalTemperature = (sourceEl.state as DecimalType) 
+				// shape negative values
+				if(decimalTemperature > 0x8000) {decimalTemperature = decimalTemperature - 0xFFFF}
+				// divide the value through 100
+				val newTemp = decimalTemperature / 100
+		
+				// define the target element name
+				val String targetFilterName = sourceEl.name.toString + "_div"
+				//// debug output
+				//val Number targetCount = heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).size
+				//logDebug("nilan", "checking element:" + targetFilterName + ", found:" + targetCount)
 				
-				if(!sourceAndTargetEqual){
-					logDebug("nilan", "postUpdating targetEl:" + targetEl.name 
-						+ ", old value:" + targetEl.state.toString
-						+ ", with new value:" + newTemp + " (originally:" + sourceEl.state.toString	+ ")" )
+				heat_nilan_aggregated?.members.filter(s | targetFilterName == s.name.toString).forEach[targetEl |
+					//check if source has changed, to prevent unnecessary postUpdates
+					var boolean sourceAndTargetEqual = false
+					if (targetEl.state.toString != "Uninitialized") {
+						val Integer oldTargetState = (targetEl.state as DecimalType * 100).intValue
+						val Integer newTargetState = (newTemp *100).intValue
+						//logDebug("nilan", "targetEl " + targetEl.name + ": currentState:" + oldTargetState + ", newState:" + newTargetState)
+						sourceAndTargetEqual = oldTargetState.equals(newTargetState)
+					}
 					
-					postUpdate(targetEl, newTemp)
-				}
-			]
-		}]
-	
-		//release the suppresion
-		suppressUpdatesLock.lock()
-		suppressUpdates = false
-		suppressUpdatesLock.unlock()	
+					if(!sourceAndTargetEqual){
+						logDebug("nilan", "postUpdating targetEl:" + targetEl.name 
+							+ ", old value:" + targetEl.state.toString
+							+ ", with new value:" + newTemp + " (originally:" + sourceEl.state.toString	+ ")" )
+						
+						postUpdate(targetEl, newTemp)
+					}
+				]
+			}]
+			
+	    } finally {
+			syncLock.unlock()
+	    }
 	}
 end
 

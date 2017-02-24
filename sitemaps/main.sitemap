@@ -29,6 +29,8 @@ sitemap main label="Main Menu"
 	            Text item=nilan_t11_div valuecolor=[>45="green",<=40="blue",<20="red"]
 	            Text item=nilan_t12_div valuecolor=[>45="green",<=45="blue",<20="red"]
 	            Text icon="temperature" label="Boiler Temp Charts"  {
+	            	Text item=nilan_t12_trend_k
+	            	Text item=nilan_t12_estimated_finished
 					Chart item=heat_nilan_boilertemps_plotable period=D refresh=30000
 	            }
 	            
