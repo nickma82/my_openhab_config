@@ -11,7 +11,7 @@ rule "set systemUpAndRunning shortly after boot"
 when
 	System started
 then
-	Thread::sleep(15000)
+	Thread::sleep(20000)
 
 	logInfo("nilan", "releasing systemUpAndRunning")
 	systemUpAndRunning = true

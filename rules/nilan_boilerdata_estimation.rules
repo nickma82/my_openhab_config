@@ -21,36 +21,49 @@ when
 then
 	//now.minusMinutes(2).minusSeconds(30)
 	val Number secsForAveraging = 7 * 60
-	var Number k_fiveMinutes = nilan_t12_div.deltaSince(now.minusSeconds(secsForAveraging)) as DecimalType
-	logDebug("nilan", "k_fiveMinutes:" + k_fiveMinutes)
+	var Number k_fiveMinutes = nilan_t12_div.deltaSince(now.minusSeconds(secsForAveraging))
+	//elvis operator - see: https://eclipse.org/xtend/documentation/203_xtend_expressions.html#null-safe-feature-calls
+	// (k_fiveMinutes == null) didn't work
+	val Boolean isKNull = if ((k_fiveMinutes ?: 0xFFFF) == 0xFFFF) true else false 
 	
-	val Number k_sec = k_fiveMinutes / secsForAveraging
-	val Number k_hour = k_sec * 360
-	
-	val Number k_hours_fourDigits = Math::round((k_hour * 10000.0).doubleValue) / 10000.0
-	logDebug("nilan", "boiler k_hours: " + k_hours_fourDigits + "[°K/h]")
-	postUpdate(nilan_t12_trend_k, k_hours_fourDigits)
-	
-	// y = kx + d
-	// x = (y-d)/k
-	// y..target temperature [°C], x..time [sec]
-	// d..temp now (e.g.nilan_t12_div)[°C]
-	// gives x==estimated time until target is reached
-	val Boolean targetTempReached = (nilan_t12_div.state as DecimalType >= nilan_t12_tempset_div.state as DecimalType)
-	if (targetTempReached) {
-		postUpdate(nilan_t12_estimated_finished, "target temp reached")
-	} else if(k_sec > 0.00000) {
-		val Number y = nilan_t12_tempset_div.state as DecimalType
-		val Number d = nilan_t12_div.state as DecimalType
-		val Number k = k_sec
+	if(!isKNull) {
+		val Number k_sec = k_fiveMinutes as DecimalType / secsForAveraging
+		val Number k_hour = k_sec * 360
 		
-		val Number x = (y-d)/k
-		val Number x_min_twoDigits = Math::round((x / 60 * 100.0).doubleValue) / 100.0
-		logDebug("nilan", "estimated time to reach nilan_t12_tempset_div: " + x_min_twoDigits + " [min]")
-		postUpdate(nilan_t12_estimated_finished, x_min_twoDigits.toString + " [min]")  
-	} else {
-		logDebug("nilan", "boiler cooling down")
-		postUpdate(nilan_t12_estimated_finished, "N.a.")  
+		val Number k_hours_fourDigits = Math::round((k_hour * 10000.0).doubleValue) / 10000.0
+		logDebug("nilan", "boiler k_hours: " + k_hours_fourDigits + "[°K/h]")
+		postUpdate(nilan_t12_trend_k, k_hours_fourDigits)
+		
+		val Boolean calculationValueMissing = (nilan_t12_tempset_div.state==Uninitialized || nilan_t12_div.state==Uninitialized)
+		val targetTempReached = [|
+				return (nilan_t12_div.state as DecimalType >= nilan_t12_tempset_div.state as DecimalType)
+			]
+		if (calculationValueMissing) {
+			postUpdate(nilan_t12_estimated_finished, "N.a. (values missing)")
+		} else if (targetTempReached == true) {
+			postUpdate(nilan_t12_estimated_finished, "target temp reached")
+		} else if(k_sec > 0.00000) {
+			logDebug("nilan", "going to estimate the boiler x value")
+			
+			// y = kx + d
+			// x = (y-d)/k
+			// y..target temperature [°C], x..time [sec]
+			// d..temp now (e.g.nilan_t12_div)[°C]
+			// gives x==estimated time until target is reached
+			val Number y = nilan_t12_tempset_div.state as DecimalType
+			val Number d = nilan_t12_div.state as DecimalType
+			val Number k = k_sec
+			logDebug("nilan", "y:"+y + ", d:"+d, ", k:"+k)
+			
+			val Number x = (y-d)/k
+			val Number x_min_twoDigits = Math::round((x / 60 * 100.0).doubleValue) / 100.0
+			logDebug("nilan", "estimated time to reach nilan_t12_tempset_div: " + x_min_twoDigits + " [min]")
+			postUpdate(nilan_t12_estimated_finished, x_min_twoDigits.toString + " [min]")  
+		} else {
+			logDebug("nilan", "boiler cooling/chilling down")
+			postUpdate(nilan_t12_estimated_finished, "N.a. (chilling)")  
+		}
+		
 	}
 	
 end
