@@ -1,26 +1,21 @@
 // Visit: https://github.com/openhab/openhab/wiki/Astro-binding
 
 //shows the sunrise
-DateTime Sunrise_Time  "Sunrise [%1$tH:%1$tM]"  {astro="planet=sun, type=rise, property=start"}
-
-// schedules a event which starts at sunrise, updating the Switch with ON, followed by a OFF
-//Switch Sunrise_Event   {astro="planet=sun, type=rise, property=start"}
-
-// schedules a event which starts <offset> minutes AFTER sunrise
-Switch Sunrise_Event_2hPost   {astro="planet=sun, type=rise, property=start, offset=120"}
-
-// schedules a event which starts <offset> minutes BEFORE sunrise
-//Switch Sunrise_Event   {astro="planet=sun, type=rise, property=start, offset=-120"}
-
+DateTime Sunrise_Time  "Sunrise [%1$tH:%1$tM]" <clock> {astro="planet=sun, type=rise, property=start"}
 // shows the sunset
-DateTime Sunset_Time   "Sunset [%1$tH:%1$tM]"   {astro="planet=sun, type=set, property=end"}
+DateTime Sunset_Time   "Sunset [%1$tH:%1$tM]"  <clock> {astro="planet=sun, type=set, property=end"}
 
-// schedules a event which starts <offset> minutes BEFORE sunset:
-Switch Sunset_Event_2hPre    {astro="planet=sun, type=set, property=end, offset=-120"}
 
+DateTime Daylight_start "daylight start [%1$tH:%1$tM]" {astro="planet=sun, type=daylight, property=start"}
+DateTime Daylight_end "daylight end [%1$tH:%1$tM]" {astro="planet=sun, type=daylight, property=end"}
 
 //// season
 String   Season_Name      "Current Season [%s]"                             {astro="planet=sun, type=season, property=name"}
+
+// azimuth and elevation
+Number   Azimuth        "Azimuth [%.2f]"     {astro="planet=sun, type=position, property=azimuth"}
+Number   Elevation      "Elevation [%.2f]"   {astro="planet=sun, type=position, property=elevation"}
+
 //DateTime Season_Spring  "Next Spring [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"  {astro="planet=sun, type=season, property=spring"}
 //DateTime Season_Summer  "Next Summer [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"  {astro="planet=sun, type=season, property=summer"}
 //DateTime Season_Autumn  "Next Autumn [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"  {astro="planet=sun, type=season, property=autumn"}
@@ -30,3 +25,4 @@ String   Season_Name      "Current Season [%s]"                             {ast
 //DateTime Sun_Eclipse_Total   "Sun total eclipse [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"   {astro="planet=sun, type=eclipse, property=total"}
 //DateTime Sun_Eclipse_Partial "Sun partial eclipse [%1$td.%1$tm.%1$tY %1$tH:%1$tM]" {astro="planet=sun, type=eclipse, property=partial"}
 //DateTime Sun_Eclipse_Ring    "Sun ring eclipse [%1$td.%1$tm.%1$tY %1$tH:%1$tM]"    {astro="planet=sun, type=eclipse, property=ring"}
+

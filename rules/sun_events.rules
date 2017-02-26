@@ -1,18 +1,18 @@
-import org.openhab.core.library.types.*
-
-rule "reset Sunrise_Event_2hPost"
-when
-	Item Sunrise_Event_2hPost changed to ON
-then
-	Thread::sleep(1000) //sleep this thread
-	Sunrise_Event_2hPost.postUpdate(OFF);
-end
-
-
-rule "reset Sunset_Event_2hPre"
-when
-	Item Sunset_Event_2hPre changed to ON
-then
-	Thread::sleep(1000) //sleep this thread
-	Sunset_Event_2hPre.postUpdate(OFF);
-end
+//import org.openhab.core.library.types.*
+//
+//rule "reset Sunrise_Event_2hPost"
+//when
+//	Item Sunrise_Event_2hPost changed to ON
+//then
+//	Thread::sleep(1000) //sleep this thread
+//	Sunrise_Event_2hPost.postUpdate(OFF);
+//end
+//
+//
+//rule "reset Sunset_Event_2hPre"
+//when
+//	Item Sunset_Event_2hPre changed to ON
+//then
+//	Thread::sleep(1000) //sleep this thread
+//	Sunset_Event_2hPre.postUpdate(OFF);
+//end

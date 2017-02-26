@@ -66,6 +66,10 @@ Number nilan_t12_tempset_div			"Target Heatpump (t12) [(current: %2.2f °C)]" 		
 //Number nilan_t14_div	"EK supply (t14) [%2.2f °C]" 			<temperature> 				(heat_nilan_aggregated)
 Number nilan_t15_div	"Room Temperature (panel)(t15) [%2.2f °C]" <temperature>			(heat_nilan_aggregated, heat_nilan_airtemps_plotable)
 
+//////////////////////// Boiler estimation values
+// @requires rrd4j >= 1.8.3
+String nilan_t12_trend_k					"T12 temperature trend [%s °K/h]"
+String nilan_t12_estimated_finished			"T12 estimated time until heated up [%s]"
 
 ///////////////////////// User config things
 // Charts
@@ -78,9 +82,11 @@ Switch nilanuser_t12_currently_reduced		"Is the temperature currently reduced [%
 Number nilanuser_t12_reduced 				"Reduced Boiler Bottom (t12) [%2.2f °C]" 	<temperature>  (nilan_user_config)
 Number nilanuser_t12_nonreduced_backup 		"Non reduced temp backuped [%2.2f °C]" 		<temperature>  (nilan_user_config)
 
-//////////////////////// Boiler estimation values
-// @requires rrd4j >= 1.8.3
-String nilan_t12_trend_k					"T12 temperature trend [%s °K/h]"
-String nilan_t12_estimated_finished			"T12 estimated time until heated up [%s]"
+// nilan Astro items
+Switch nilan_boiler_nighttime				"Is Currently nighttime [%s]"	<clock>
+Switch nilan_boiler_nighttime_set_event			<clock>	{astro="planet=sun, type=set,  property=end, offset=-60"}
+Switch nilan_boiler_nighttime_reset_event		<clock>	{astro="planet=sun, type=rise, property=start, offset=120"}
 
+DateTime nilan_boiler_nighttime_begin	"Boiler nighttime start [%1$tH:%1$tM]"  <clock>  {astro="planet=sun, type=set, property=end, offset=-60"}	
+DateTime nilan_boiler_nighttime_end		"Boiler nighttime end [%1$tH:%1$tM]"  <clock>  {astro="planet=sun, type=rise, property=start, offset=120"}
 

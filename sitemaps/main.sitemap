@@ -48,8 +48,9 @@ sitemap main label="Main Menu"
 		            	Text item=nilanuser_t12_currently_reduced
 	            	}
 	            	Frame label="Sun Information" {
-						Text item=Sunrise_Time icon="clock"
-						Text item=Sunset_Time icon="clock"
+	            		Text item=nilan_boiler_nighttime
+						Text item=nilan_boiler_nighttime_begin
+						Text item=nilan_boiler_nighttime_end
 					}
 	            }
 	        }

@@ -1,6 +1,59 @@
 import org.openhab.core.library.types.*
 import org.openhab.core.persistence.*
 import org.openhab.model.script.actions.*
+import org.joda.time.*
+import org.eclipse.xtext.xbase.lib.* //for lambda Functions$Function<n>
+
+//see the following link for lambdas: https://github.com/openhab/openhab1-addons/wiki/Reusable-Rules-via-Functions
+val Functions$Function0 setNighttimeReduction = [|
+	// backup the current value
+	val Number backupTemperature = nilan_t12_tempset_div.state as DecimalType
+	if(backupTemperature > 0.00000) {
+		//just backup the temperature if it's a valid value
+		postUpdate(nilanuser_t12_nonreduced_backup, backupTemperature)
+	} else {
+		logWarn("nilan", "catched invalid t12_tempset value:" + backupTemperature)
+	}
+	
+	// set the reduced temp state
+	postUpdate(nilanuser_t12_currently_reduced, ON)
+	
+	Thread::sleep(20)
+	val targetTemp = nilanuser_t12_reduced.state as DecimalType * 100
+	logInfo("nilan", "nighttime reduction recovering to temp:" + targetTemp)
+	sendCommand(nilan_t12_tempset, targetTemp)
+]
+
+val Functions$Function1 resetCurrentNighttimeReduction = [
+		Boolean restoreNonreducedValue |
+	postUpdate(nilanuser_t12_currently_reduced, OFF)
+	
+	if(restoreNonreducedValue) {
+		Thread::sleep(20)
+		val targetTemp = nilanuser_t12_nonreduced_backup.state as DecimalType *100
+		logInfo("nilan", "nighttime reduction setting temp to:" + targetTemp)
+		sendCommand(nilan_t12_tempset, targetTemp)
+	}
+]
+
+rule "nighttime mode updater"
+when
+	Item nilan_boiler_nighttime changed or
+	Item nilanuser_en_t12_autoreduction changed
+then
+	val Boolean isCurrentlyNighttime = (nilan_boiler_nighttime.state == ON)
+	val Boolean autoreductionEnabled = (nilanuser_en_t12_autoreduction.state == ON)
+
+	//checkForNighttimeChanges
+	logInfo("nilan", "isCurrentlyNighttime:" + isCurrentlyNighttime + ", autoreductionEnabled:" + autoreductionEnabled)
+	if(isCurrentlyNighttime && autoreductionEnabled) {
+		setNighttimeReduction.apply()
+		logInfo("nilan", "done setting nighttime reduction")
+	} else {
+		resetCurrentNighttimeReduction.apply(true)
+		logInfo("nilan", "done resetting nighttime reduction")
+	}
+end
 
 rule "Nilan Init virtual Items of nilan night time reduction"
 when
@@ -16,11 +69,39 @@ then
         nilanuser_t12_reduced.postUpdate(25.0)
     }
     if (nilanuser_t12_nonreduced_backup.state == Uninitialized) {
-        nilanuser_t12_nonreduced_backup.postUpdate(0)
+        nilanuser_t12_nonreduced_backup.postUpdate(48.0)
+    }
+    
+    
+    if (nilan_boiler_nighttime.state == Uninitialized) {
+    	//see: https://community.openhab.org/t/design-pattern-time-of-day/15407
+    	val long nighttime_begin =  (nilan_boiler_nighttime_begin.state as DateTimeType).calendar.timeInMillis
+    	val long nighttime_end = 	(nilan_boiler_nighttime_end.state as DateTimeType).calendar.timeInMillis
+    
+    	logDebug("nilan", "now.isAfter(nighttime_begin):" + now.isAfter(nighttime_begin) + ", now.isBefore(nighttime_end)):" + now.isBefore(nighttime_end))
+    	val newState = if (now.isAfter(nighttime_begin) || now.isBefore(nighttime_end)) ON else OFF
+    	nilan_boiler_nighttime.postUpdate(newState)
+        
     }
 end
 
-rule "check nighttime reset conditions on nilan_t12_tempset changes"
+
+rule "react on Astro nighttime events"
+when
+	Item nilan_boiler_nighttime_reset_event changed to ON
+	or
+	Item nilan_boiler_nighttime_set_event changed to ON
+then
+	if(nilan_boiler_nighttime_set_event.state == ON) {
+		postUpdate(nilan_boiler_nighttime, ON)
+		postUpdate(nilan_boiler_nighttime_set_event, OFF)
+	} else {
+		postUpdate(nilan_boiler_nighttime, OFF)
+		postUpdate(nilan_boiler_nighttime_reset_event, OFF)
+	}
+end
+
+rule "check if nighttime has been interrupted by user changes (on nilan_t12_tempset)"
 when
 	Item nilan_t12_tempset_div changed
 then
@@ -30,43 +111,6 @@ then
 	val Boolean changeDuringNighttime = (nightTimeReductionON && !newValueEqualTargetReduced) 
 	if(changeDuringNighttime) {
 		logInfo("nilan", "user chagned the tempset to:" + nilan_t12_tempset_div.state + ", resetting currently reduced state to OFF")
-		postUpdate(nilanuser_t12_currently_reduced, OFF)
-	}
-end
-
-rule "Nilan set reduced boiler temp at sunset"
-when
-	Item Sunset_Event_2hPre changed to ON
-then
-	val Boolean autoreductionEnabled = (nilanuser_en_t12_autoreduction.state == ON)
-	if(autoreductionEnabled) {
-		// backup the current value
-		postUpdate(nilanuser_t12_nonreduced_backup, nilan_t12_tempset_div.state)
-		
-		// set the reduced temp
-		postUpdate(nilanuser_t12_currently_reduced, ON)
-		
-		Thread::sleep(20)
-		val targetTemp = nilanuser_t12_reduced.state as DecimalType * 100
-		logInfo("nilan", "nighttime reduction recovering to temp:" + targetTemp)
-		sendCommand(nilan_t12_tempset, targetTemp)
-	} else {
-		logDebug("nilan", "recieved a sunset event, but auto-reduction is disabled by the user")
-	}
-end
-
-rule "Nilan restore non-reduced boiler temp"
-when
-	Item Sunrise_Event_2hPost changed to ON or
-	Item nilanuser_en_t12_autoreduction changed to OFF
-then
-	// just restore temp if the current_reduction is actually enabled
-	if(nilanuser_t12_currently_reduced.state == ON) {
-		postUpdate(nilanuser_t12_currently_reduced, OFF)
-		
-		Thread::sleep(20)
-		val targetTemp = nilanuser_t12_nonreduced_backup.state as DecimalType *100
-		logInfo("nilan", "nighttime reduction setting temp to:" + targetTemp)
-		sendCommand(nilan_t12_tempset, targetTemp)
+		resetCurrentNighttimeReduction.apply(false)
 	}
 end
